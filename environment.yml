@@ -1,0 +1,21 @@
+name: kinase-conformational-modeling
+channels:
+  - conda-forge
+  - openeye
+  - tpeulen
+dependencies:
+  - python>=3.6
+  - jupyterlab
+  - matplotlib
+  - mdanalysis
+  - nglview
+  - numpy
+  - openeye-toolkits
+  - osfclient
+  - pandas
+  - pymol-open-source
+  - requests
+  - rdkit
+  - pip:
+    - https://github.com/volkamerlab/opencadd/archive/3fe042334c17368deaa17794e5368a632f964e3a.zip
+    - https://github.com/openkinome/kinoml/archive/64681ca476ffe647ec55d5fb1cb122707815e07f.zip
