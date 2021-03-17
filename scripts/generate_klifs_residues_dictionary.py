@@ -19,7 +19,7 @@ from opencadd.databases.klifs import setup_remote
 
 
 klifs_kinase_id = 392  # ABL1
-klifs_kinase_id = 406  # EGFR
+# klifs_kinase_id = 406  # EGFR
 
 # get the highest quality structure of the kinase of interest with complete KLIFS pocket
 remote = setup_remote()
