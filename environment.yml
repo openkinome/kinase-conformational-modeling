@@ -4,18 +4,24 @@ channels:
   - openeye
   - tpeulen
 dependencies:
-  - python>=3.6
+  - python==3.7
+  - appdirs
+  - biopandas
+  - biopython
+  - bravado
   - jupyterlab
   - matplotlib
   - mdanalysis
   - nglview
   - numpy
   - openeye-toolkits
+  - openforcefield
   - osfclient
   - pandas
   - pymol-open-source
   - requests
   - rdkit
+  - tqdm
   - pip:
     - https://github.com/volkamerlab/opencadd/archive/3fe042334c17368deaa17794e5368a632f964e3a.zip
     - https://github.com/openkinome/kinoml/archive/64681ca476ffe647ec55d5fb1cb122707815e07f.zip
