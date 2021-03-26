@@ -12,11 +12,14 @@ dependencies:
   - jupyterlab
   - matplotlib
   - mdanalysis
+  - mdtraj
   - nglview
   - numpy
   - openeye-toolkits
   - openforcefield
   - osfclient
+  - openmm
+  - openmmtools
   - pandas
   - pymol-open-source
   - requests
