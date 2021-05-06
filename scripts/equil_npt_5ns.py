@@ -31,16 +31,19 @@ parser.add_argument(
     "-padding",
     dest="padding",
     type=float,
-    default=0,
-    help="the padding to use in nm, default = 0",
+    help="the padding to use in nm",
 )
 parser.add_argument(
-    "-box_type",
-    dest="box_type",
-    type=str,
-    default="cube",
-    help="the box type to use, default = 'cube'",
-    choices=["cube", "truncatedOctahedron"],
+    "-box_size",
+    dest="box_size",
+    default=None,
+    help="the box size to use in nm",
+)
+parser.add_argument(
+    "-n_solvent",
+    dest="n_solvent",
+    type=int,
+    help="the number of solvent particles to use",
 )
 parser.add_argument(
     "-output_dir",
@@ -62,8 +65,6 @@ remove_cm_motion = False
 hydrogen_mass = 4.0 * unit.amu  # Using HMR
 collision_rate = 1.0 / unit.picoseconds
 timestep = 0.004 * unit.picoseconds  # We can use a 4fs timestep with HMR
-geompadding = float(args.padding) * unit.nanometer
-box_type = args.box_type
 
 # Set steps and frequencies
 nsteps = 1250000  # 5 ns
@@ -74,43 +75,52 @@ traj_freq = 2500  # 500 frames
 # Setup input
 pdb = PDBFile(args.pdb_file)
 forcefield = ForceField("amber14/protein.ff14SB.xml", "amber14/tip3p.xml")
+
+# TODO add the dimensions as an option
+pdb.topology.setUnitCellDimensions(mm.Vec3(10,10,10) * unit.nanometer)
+
 modeller = Modeller(pdb.topology, pdb.positions)
 
 print("Adding solvent...")
-print(f" ---> Using box type: {box_type}")
-print(f" ---> Using {geompadding} padding")
 
-padding, boxSize, boxVectors = None, None, None
+padding = args.padding
 
-if box_type == "cube":
+# TODO rewrite this part
+if not padding:
+    print(f" ---> Using custom box vectors and number of solvent atoms")
 
-    padding = geompadding
+    if args.box_size is None:
+        n_solvent = args.n_solvent
+        print(f"number of solvent atoms to use: {n_solvent}")
 
-elif box_type == "truncatedOctahedron":
+        modeller.addSolvent(
+            forcefield,
+            model="tip3p",
+            numAdded=n_solvent,
+            ionicStrength=0.15 * unit.molar,
+        )
 
-    maxSize = max(
-        max((pos[i] for pos in modeller.positions))
-        - min((pos[i] for pos in modeller.positions))
-        for i in range(3)
+    elif args.n_solvent is None:
+        box_size = args.box_size
+
+        modeller.addSolvent(
+            forcefield,
+            model="tip3p",
+            boxSize=mm.Vec3(box_size, box_size, box_size),
+            ionicStrength=0.15 * unit.molar,
+        )
+
+elif padding:
+    print(f" ---> Using {geompadding} padding")
+    
+    geompadding = float(padding) * unit.nanometer
+
+    modeller.addSolvent(
+        forcefield,
+        model="tip3p",
+        padding=geompadding,
+        ionicStrength=0.15 * unit.molar
     )
-
-    vectors = (
-        mm.Vec3(1, 0, 0),
-        mm.Vec3(1 / 3, 2 * sqrt(2) / 3, 0),
-        mm.Vec3(-1 / 3, sqrt(2) / 3, sqrt(6) / 3),
-    )
-
-    boxVectors = [(maxSize + geompadding) * v for v in vectors]
-
-
-modeller.addSolvent(
-    forcefield,
-    model="tip3p",
-    padding=padding,
-    boxVectors=boxVectors,
-    boxSize=boxSize,
-    ionicStrength=0.15 * unit.molar
-)
 
 # Set file names
 output_prefix = os.path.join(os.path.normpath(args.output_dir), '') # ensure path string is correct
@@ -161,16 +171,6 @@ sim = app.Simulation(modeller.topology, system, integrator, platform, prop)
 # Set the particle positions
 sim.context.setPositions(modeller.positions)
 
-print(f"Saving pre-minimised state")
-with open(output_prefix + "pre-min.pdb", "w") as outfile:
-    PDBFile.writeFile(
-        sim.topology,
-        sim.context.getState(getPositions=True, enforcePeriodicBox=True).getPositions(),
-        file=outfile,
-        keepIds=True,
-    )
-
-
 # Minimize the energy
 print("Minimising energy...")
 print(
@@ -189,11 +189,6 @@ print(
     )
 )
 
-#state = sim.context.getState(getEnergy=True, getForces=True)
-#for i, f in enumerate(state.getForces()):
-#  if unit.norm(f) > 1e6*unit.kilojoules_per_mole/unit.nanometer:
-#    print(i+1, f)
-
 # Save the minimised state as a PDB
 print(f"Saving minimised state as {state_pdb_filename_min}")
 with open(output_prefix + state_pdb_filename_min, "w") as outfile:
@@ -203,8 +198,6 @@ with open(output_prefix + state_pdb_filename_min, "w") as outfile:
         file=outfile,
         keepIds=True,
     )
-
-os.sys.exit()
 
 # set starting velocities:
 print("Generating random starting velocities")
