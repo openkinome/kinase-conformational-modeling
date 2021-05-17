@@ -1,7 +1,7 @@
 """
 This script prepares apo structures of kinases for a given KLIFS kinase ID. NMR structures are ignored.
 It uses functionalities from KinoML and opencadd:
-https://github.com/openkinome/kinoml/commit/a24ad82013f13ebeab9c6bfd2355cb52ae387a5b
+https://github.com/openkinome/kinoml/commit/550e902037a62c120f71a83dd04f95e2ad408666
 https://github.com/volkamerlab/opencadd/commit/3fe042334c17368deaa17794e5368a632f964e3a
 
 The specified opencadd commit contains a fix for wrongly assigned alternate locations for human ABL1 and EGFR
